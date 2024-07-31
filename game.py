@@ -18,8 +18,8 @@ Point = namedtuple('Point', 'x, y')
 # rgb colors
 WHITE = (255, 255, 255)
 RED = (200,0,0)
-BLUE1 = (0, 0, 255)
-BLUE2 = (0, 100, 255)
+ORANGE1 = (241, 154, 62)
+ORANGE2 = (167, 113, 55)
 BLACK = (0,0,0)
 
 # game settings
