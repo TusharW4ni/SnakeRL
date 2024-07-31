@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
+from torch.utils.tensorboard import SummaryWriter
 
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -39,6 +40,8 @@ class QTrainer:
         self.model = model
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
+        self.writer = SummaryWriter('runs/training_run_1')  # create a SummaryWriter
+        self.step = 0
 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float)
@@ -72,3 +75,16 @@ class QTrainer:
         loss.backward()
 
         self.optimizer.step()
+
+        # log data for tensorboard
+        self.writer.add_scalar('Loss', loss, self.step)
+        self.visualize_weights_and_biases()
+        self.step += 1
+
+    def visualize_weights_and_biases(self):
+        for name, weight in self.model.named_parameters():
+            self.writer.add_histogram(name, weight, self.step)
+            self.writer.add_histogram(f'{name}.grad', weight.grad, self.step)
+
+    def __del__(self):
+        self.writer.close()  # close the writer when you're done with it

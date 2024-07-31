@@ -74,7 +74,7 @@ class Agent:
             game.food.x > game.head.x,  # food right
             game.food.y < game.head.y,  # food up
             game.food.y > game.head.y  # food down
-            ]
+        ]
 
         return np.array(state, dtype=int)
 
@@ -126,11 +126,11 @@ def train():
         final_move = agent.get_action(state_old)
 
         # perform move and get new state
-        reward, done, score = game.play_step(final_move)
+        reward, done, score, death_reason = game.play_step(final_move)  # modify this line
         state_new = agent.get_state(game)
 
         # train short memory
-        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+        loss = agent.train_short_memory(state_old, final_move, reward, state_new, done)  # modify this line
 
         # remember
         agent.remember(state_old, final_move, reward, state_new, done)

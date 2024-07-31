@@ -18,16 +18,14 @@ Point = namedtuple('Point', 'x, y')
 # rgb colors
 WHITE = (255, 255, 255)
 RED = (200,0,0)
-ORANGE1 = (241, 154, 62)
-ORANGE2 = (167, 113, 55)
 BLACK = (0,0,0)
 
 # game settings
-BLOCK_SIZE = 20
+BLOCK_SIZE = 50
 SPEED = 40
 
 class SnakeGameAI:
-    def __init__(self, w=BLOCK_SIZE*30, h=BLOCK_SIZE*30):
+    def __init__(self, w=10*BLOCK_SIZE, h=10*BLOCK_SIZE):
         self.w = w
         self.h = h
         self.display = pygame.display.set_mode((self.w, self.h))
@@ -103,19 +101,19 @@ class SnakeGameAI:
     def _update_ui(self):
         self.display.fill(BLACK)
 
-        for pt in self.snake[1:]:
-            pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
+        # Draw grid lines
+        for x in range(0, self.w, BLOCK_SIZE):
+            pygame.draw.line(self.display, WHITE, (x, 0), (x, self.h))
+        for y in range(0, self.h, BLOCK_SIZE):
+            pygame.draw.line(self.display, WHITE, (0, y), (self.w, y))
 
-        head = self.snake[0]
-        if self.direction == Direction.RIGHT:
-            pygame.draw.polygon(self.display, BLUE1, [(head.x, head.y), (head.x + BLOCK_SIZE, head.y + BLOCK_SIZE // 2), (head.x, head.y + BLOCK_SIZE)])
-        elif self.direction == Direction.LEFT:
-            pygame.draw.polygon(self.display, BLUE1, [(head.x + BLOCK_SIZE, head.y), (head.x, head.y + BLOCK_SIZE // 2), (head.x + BLOCK_SIZE, head.y + BLOCK_SIZE)])
-        elif self.direction == Direction.UP:
-            pygame.draw.polygon(self.display, BLUE1, [(head.x, head.y + BLOCK_SIZE), (head.x + BLOCK_SIZE // 2, head.y), (head.x + BLOCK_SIZE, head.y + BLOCK_SIZE)])
-        elif self.direction == Direction.DOWN:
-            pygame.draw.polygon(self.display, BLUE1, [(head.x, head.y), (head.x + BLOCK_SIZE // 2, head.y + BLOCK_SIZE), (head.x + BLOCK_SIZE, head.y)])
+        n = len(self.snake)
+        for i, pt in enumerate(self.snake):  # Reverse the order of the blocks
+            # Calculate the color based on the position of the block in the snake list
+            color_intensity = max(0, 255 - i * (255 // n))  # Decrease the intensity for blocks closer to the tail
+            block_color = (color_intensity, color_intensity, color_intensity)  # Create a grayscale color with the calculated intensity
+
+            pygame.draw.rect(self.display, block_color, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
 
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
 
@@ -123,29 +121,35 @@ class SnakeGameAI:
         self.display.blit(text, [0, 0])
         pygame.display.flip()
 
-
     def play_step(self, action):
         self.frame_iteration += 1
 
-        #collect user input
+        # collect user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 quit()
 
-        #move
+        # move
         self._move(action)
         self.snake.insert(0, self.head)
 
-        #check if game over
+        # check if game over
         reward = 0
         game_over = False
-        if self.is_collision() or self.frame_iteration > 100*len(self.snake):
+        death_reason = ''  # initialize death_reason
+        if self.is_collision():
             game_over = True
             reward = -10
-            return reward, game_over, self.score
+            death_reason = 'Collision'  # set death_reason to 'Collision'
+        elif self.frame_iteration > 100*len(self.snake):
+            game_over = True
+            reward = -10
+            death_reason = 'Timeout'  # set death_reason to 'Timeout'
+        if game_over:
+            return reward, game_over, self.score, death_reason  # return death_reason
 
-        #place new food or just move
+        # place new food or just move
         if self.head == self.food:
             self.score += 1
             reward = 10
@@ -153,9 +157,9 @@ class SnakeGameAI:
         else:
             self.snake.pop()
 
-        #update ui and clock
+        # update ui and clock
         self._update_ui()
         self.clock.tick(SPEED)
 
-        #return game over and score
-        return reward, game_over, self.score
+        # return game over and score
+        return reward, game_over, self.score, death_reason  # return death_reason
