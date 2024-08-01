@@ -10,17 +10,6 @@ MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 
-def play():
-    agent = Agent()
-    agent.model = Linear_QNet.load()
-    game = SnakeGameAI()
-    while True:
-        state_old = agent.get_state(game)
-        final_move = agent.get_action(state_old)
-        reward, done, score = game.play_step(final_move)
-        if done:
-            game.reset()
-
 class Agent:
 
     def __init__(self):
@@ -28,7 +17,8 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(11, 256, 3)
+        # self.model = Linear_QNet(11, 256, 256, 3)
+        self.model = Linear_QNet(11, 256, 256, 256, 3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
 
@@ -126,11 +116,11 @@ def train():
         final_move = agent.get_action(state_old)
 
         # perform move and get new state
-        reward, done, score, death_reason = game.play_step(final_move)  # modify this line
+        reward, done, score, death_reason = game.play_step(final_move)
         state_new = agent.get_state(game)
 
         # train short memory
-        loss = agent.train_short_memory(state_old, final_move, reward, state_new, done)  # modify this line
+        loss = agent.train_short_memory(state_old, final_move, reward, state_new, done)
 
         # remember
         agent.remember(state_old, final_move, reward, state_new, done)
@@ -145,7 +135,8 @@ def train():
                 record = score
                 agent.model.save()
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+            print('Game', agent.n_games, 'Score', score, 'Record:', record, "Death Reason:", death_reason)
+            print("-------------------------------")
 
             plot_scores.append(score)
             total_score += score
@@ -153,6 +144,17 @@ def train():
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
 
+
+def play():
+    agent = Agent()
+    agent.model = Linear_QNet.load()
+    game = SnakeGameAI()
+    while True:
+        state_old = agent.get_state(game)
+        final_move = agent.get_action(state_old)
+        reward, done, score = game.play_step(final_move)
+        if done:
+            game.reset()
 
 if __name__ == '__main__':
     train()

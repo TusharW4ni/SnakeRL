@@ -22,10 +22,10 @@ BLACK = (0,0,0)
 
 # game settings
 BLOCK_SIZE = 50
-SPEED = 40
+SPEED = 60
 
 class SnakeGameAI:
-    def __init__(self, w=10*BLOCK_SIZE, h=10*BLOCK_SIZE):
+    def __init__(self, w=4*BLOCK_SIZE, h=4*BLOCK_SIZE):
         self.w = w
         self.h = h
         self.display = pygame.display.set_mode((self.w, self.h))
@@ -122,6 +122,8 @@ class SnakeGameAI:
         pygame.display.flip()
 
     def play_step(self, action):
+        print(f"Frame iteration: {self.frame_iteration}")
+        print(f"Snake Size: {len(self.snake)}")
         self.frame_iteration += 1
 
         # collect user input
@@ -135,16 +137,16 @@ class SnakeGameAI:
         self.snake.insert(0, self.head)
 
         # check if game over
-        reward = 0
+        reward = -1  # small penalty for each move
         game_over = False
         death_reason = ''  # initialize death_reason
         if self.is_collision():
             game_over = True
-            reward = -10
+            reward = -20  # large penalty for collision
             death_reason = 'Collision'  # set death_reason to 'Collision'
-        elif self.frame_iteration > 100*len(self.snake):
+        elif self.frame_iteration > 5*(len(self.snake)-1):
             game_over = True
-            reward = -10
+            reward = -10  # smaller penalty for timeout
             death_reason = 'Timeout'  # set death_reason to 'Timeout'
         if game_over:
             return reward, game_over, self.score, death_reason  # return death_reason
@@ -152,7 +154,7 @@ class SnakeGameAI:
         # place new food or just move
         if self.head == self.food:
             self.score += 1
-            reward = 10
+            reward = 50  # reward for eating food
             self._place_food()
         else:
             self.snake.pop()
@@ -162,4 +164,5 @@ class SnakeGameAI:
         self.clock.tick(SPEED)
 
         # return game over and score
+        print(f"Reward: {reward}")
         return reward, game_over, self.score, death_reason  # return death_reason

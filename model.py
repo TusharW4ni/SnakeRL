@@ -6,14 +6,18 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 
 class Linear_QNet(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
-        super().__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, output_size)
+    def __init__(self, input_size, hidden_size1, hidden_size2, hidden_size3, output_size):
+        super(Linear_QNet, self).__init__()
+        self.linear1 = nn.Linear(input_size, hidden_size1)
+        self.linear2 = nn.Linear(hidden_size1, hidden_size2)
+        self.linear3 = nn.Linear(hidden_size2, hidden_size3)
+        self.linear4 = nn.Linear(hidden_size3, output_size)
 
     def forward(self, x):
-        x = F.relu(self.linear1(x))
-        x = self.linear2(x)
+        x = torch.relu(self.linear1(x))
+        x = torch.relu(self.linear2(x))
+        x = torch.relu(self.linear3(x))
+        x = self.linear4(x)
         return x
 
     def save(self, file_name='model.pth'):
@@ -28,6 +32,7 @@ class Linear_QNet(nn.Module):
     def load(cls, file_name='model.pth'):
         model_folder_path = './model'
         file_name = os.path.join(model_folder_path, file_name)
+        # model = cls(11, 256, 128, 3)  # Adjust the hidden layer sizes
         model = cls(11, 256, 3)
         model.load_state_dict(torch.load(file_name))
         return model
